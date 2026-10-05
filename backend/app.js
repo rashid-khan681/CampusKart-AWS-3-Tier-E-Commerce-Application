@@ -23,6 +23,9 @@ app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
 
+// Health check (used by Kubernetes liveness probe)
+app.get("/health", (req, res) => res.status(200).send("ok"));
+
 // Optional test route
 app.get("/api/test-db", async (req, res) => {
   try {
@@ -34,4 +37,3 @@ app.get("/api/test-db", async (req, res) => {
 });
 
 module.exports = app;
-
