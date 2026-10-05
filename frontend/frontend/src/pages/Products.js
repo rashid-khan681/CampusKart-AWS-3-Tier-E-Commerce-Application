@@ -3,30 +3,22 @@ import { useSearchParams } from "react-router-dom";
 import API from "../services/api";
 import ProductCard from "../components/ProductCard";
 import { CATEGORIES } from "../categories";
- 
+
 function Products() {
   const [searchParams] = useSearchParams();
-  const urlQ = searchParams.get("q") || "";
-  const urlCat = Number(searchParams.get("cat")) || 0;
- 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState(urlQ);
-  const [cat, setCat] = useState(urlCat);
+  const [query, setQuery] = useState("");
+  const [cat, setCat] = useState(Number(searchParams.get("cat")) || 0);
   const [sort, setSort] = useState("default");
- 
-  useEffect(() => {
-    setQuery(urlQ);
-    setCat(urlCat);
-  }, [urlQ, urlCat]);
- 
+
   useEffect(() => {
     API.get("/api/products")
       .then((res) => setProducts(res.data))
       .catch((err) => console.log(err))
       .finally(() => setLoading(false));
   }, []);
- 
+
   const visible = useMemo(() => {
     let list = products.filter(
       (p) =>
@@ -39,15 +31,15 @@ function Products() {
     if (sort === "high") list = [...list].sort((a, b) => b.price - a.price);
     return list;
   }, [products, query, cat, sort]);
- 
+
   return (
     <div className="container mt-4 pk-wrap">
       <h2 className="fw-bold">Explore the Store</h2>
- 
+
       <div className="pk-toolbar">
         <input
           className="form-control pk-search"
-          placeholder="Filter products..."
+          placeholder="Search products..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
@@ -61,7 +53,7 @@ function Products() {
           <option value="high">Price: High to Low</option>
         </select>
       </div>
- 
+
       <div className="pk-chips">
         <button className={`pk-chip ${cat === 0 ? "on" : ""}`} onClick={() => setCat(0)}>
           All
@@ -76,14 +68,14 @@ function Products() {
           </button>
         ))}
       </div>
- 
+
       <div className="pk-grid">
         {loading &&
           Array.from({ length: 8 }).map((_, i) => <div className="pk-skel" key={i} />)}
         {!loading &&
           visible.map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
       </div>
- 
+
       {!loading && visible.length === 0 && (
         <p className="text-center mt-5" style={{ color: "var(--muted)" }}>
           No products match your search.
@@ -92,5 +84,5 @@ function Products() {
     </div>
   );
 }
- 
+
 export default Products;

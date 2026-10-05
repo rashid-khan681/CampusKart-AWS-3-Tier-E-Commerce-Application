@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import API from "../services/api";
 
 function Cart() {
   const [cartItems, setCartItems] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchCart();
@@ -22,6 +24,17 @@ function Cart() {
       await API.delete(`/api/cart/${id}`);
       fetchCart();
     } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const handlePlaceOrder = async () => {
+    try {
+      await API.post("/api/orders");
+      alert("Order placed successfully");
+      navigate("/orders");
+    } catch (err) {
+      alert("Could not place order");
       console.log(err);
     }
   };
@@ -70,6 +83,12 @@ function Cart() {
           </table>
 
           <h4 className="text-end">Total: ₹ {totalAmount}</h4>
+
+          <div className="text-end mt-3">
+            <button className="btn btn-dark" onClick={handlePlaceOrder}>
+              Place Order
+            </button>
+          </div>
         </>
       )}
     </div>

@@ -1,67 +1,80 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import API from "../services/api";
-
+ 
+const linkClass = ({ isActive }) => "ck-link" + (isActive ? " active" : "");
+ 
 function Navbar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const token = localStorage.getItem("token");
-
+  const [cartCount, setCartCount] = useState(0);
+  const [q, setQ] = useState("");
+ 
+  useEffect(() => {
+    const load = () => {
+      if (!localStorage.getItem("token")) {
+        setCartCount(0);
+        return;
+      }
+      API.get("/api/cart")
+        .then((res) => setCartCount(res.data.length))
+        .catch(() => {});
+    };
+    load();
+    window.addEventListener("cart-updated", load);
+    return () => window.removeEventListener("cart-updated", load);
+  }, [token, location.pathname]);
+ 
+  const handleSearch = (e) => {
+    e.preventDefault();
+    navigate(`/products?q=${encodeURIComponent(q.trim())}`);
+  };
+ 
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/login");
   };
-
-  const [cartCount, setCartCount] = useState(0);
-
-useEffect(() => {
-  const fetchCartCount = async () => {
-    try {
-      const res = await API.get("/api/cart");
-      setCartCount(res.data.length);
-    } catch (err) {}
-  };
-
-  if (token) {
-    fetchCartCount();
-  }
-}, [token]);
-
+ 
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
-      <div className="container">
-        <Link className="navbar-brand" to="/">
-          CampusKart
+    <nav className="ck-nav">
+      <div className="container ck-nav-inner">
+        <Link to="/" className="ck-logo">
+          <span className="ck-mark">CK</span>
+          <span className="ck-word">
+            Campus<b>Kart</b>
+          </span>
         </Link>
-
-        <div>
-          <Link className="nav-link d-inline text-white me-3" to="/">
-            Home
-          </Link>
-
-          <Link className="nav-link d-inline text-white me-3" to="/products">
-            Products
-          </Link>
-
-          <Link className="nav-link d-inline text-white me-3" to="/cart">
-  Cart {cartCount > 0 && `(${cartCount})`}
-</Link>
-
+ 
+        <form className="ck-search" onSubmit={handleSearch}>
+          <input
+            placeholder="Search for books, stationery, gadgets..."
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+          <button type="submit">Search</button>
+        </form>
+ 
+        <div className="ck-links">
+          <NavLink to="/" end className={linkClass}>Home</NavLink>
+          <NavLink to="/products" className={linkClass}>Products</NavLink>
+          {token && <NavLink to="/orders" className={linkClass}>Orders</NavLink>}
+          <NavLink to="/cart" className={linkClass}>
+            🛒 Cart
+            {cartCount > 0 && <span className="ck-badge">{cartCount}</span>}
+          </NavLink>
           {token ? (
-            <button
-              className="btn btn-sm btn-outline-light"
-              onClick={handleLogout}
-            >
-              Logout
-            </button>
+            <button className="ck-link" onClick={handleLogout}>Logout</button>
           ) : (
-            <Link className="nav-link d-inline text-white" to="/login">
-              Login
-            </Link>
+            <>
+              <NavLink to="/login" className={linkClass}>Login</NavLink>
+              <NavLink to="/register" className={linkClass}>Register</NavLink>
+            </>
           )}
         </div>
       </div>
     </nav>
   );
 }
-
+ 
 export default Navbar;

@@ -3,18 +3,18 @@ import { Link } from "react-router-dom";
 import API from "../services/api";
 import ProductCard from "../components/ProductCard";
 import { CATEGORIES } from "../categories";
- 
+
 function Home() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
- 
+
   useEffect(() => {
     API.get("/api/products")
       .then((res) => setProducts(res.data))
       .catch((err) => console.log(err))
       .finally(() => setLoading(false));
   }, []);
- 
+
   const counts = useMemo(() => {
     const m = {};
     products.forEach((p) => {
@@ -22,9 +22,9 @@ function Home() {
     });
     return m;
   }, [products]);
- 
+
   const featured = products.slice(0, 8);
- 
+
   return (
     <div className="container">
       <section className="hero">
@@ -57,7 +57,7 @@ function Home() {
             </div>
           </div>
         </div>
- 
+
         <div className="hero-visual">
           <div className="blob b1" />
           <div className="blob b2" />
@@ -67,7 +67,7 @@ function Home() {
           <div className="fcard f3"><span className="ic">🎒</span> Gear</div>
         </div>
       </section>
- 
+
       <div className="sec-head">
         <h3>Shop by category</h3>
       </div>
@@ -85,10 +85,10 @@ function Home() {
           </Link>
         ))}
       </div>
- 
+
       <div className="sec-head">
         <h3>Featured products</h3>
-        <Link to="/products" className="sec-link">View all</Link>
+        <Link to="/products" className="sec-link">View all →</Link>
       </div>
       <div className="pk-grid">
         {loading &&
@@ -96,10 +96,10 @@ function Home() {
         {!loading &&
           featured.map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
       </div>
- 
-      <div className="footer">CampusKart, built for students</div>
+
+      <div className="footer">CampusKart · built for students</div>
     </div>
   );
 }
- 
+
 export default Home;

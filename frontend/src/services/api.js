@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://ecommerce-alb-1337667566.ap-south-1.elb.amazonaws.com",
+  baseURL: process.env.REACT_APP_API_URL || "",
 });
 
 // 🔐 Attach token automatically
