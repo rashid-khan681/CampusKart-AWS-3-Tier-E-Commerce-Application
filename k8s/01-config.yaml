@@ -1,0 +1,29 @@
+# Non-secret settings go in the ConfigMap. Passwords and the JWT secret go in the Secret.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: campuskart-config
+  namespace: campuskart
+data:
+  # The database host is the name of the service that exposes the database pod.
+  DB_HOST: mysql
+  # The database port is the port that the database pod listens on.
+  DB_PORT: "3306"
+  # The database name is the name of the database that the application will use.
+  DB_NAME: ecommerce
+  # The database user is the username that the application will use to connect to the database.
+  DB_USER: campuskart
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: campuskart-secrets
+  namespace: campuskart
+type: Opaque
+stringData:
+  # The database password is the password that the application will use to connect to the database.
+  DB_PASSWORD: ck-db-pass-change-me
+  # The root password is the password that the database will use for the root user.
+  MYSQL_ROOT_PASSWORD: ck-root-pass-change-me
+  # The JWT secret is the secret that the application will use to sign and verify JWT tokens.
+  JWT_SECRET: ck-jwt-secret-change-me

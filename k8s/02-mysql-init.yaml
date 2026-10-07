@@ -1,0 +1,84 @@
+apiVersion: v1
+data:
+  01-schema.sql: |
+    CREATE TABLE IF NOT EXISTS users (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      full_name VARCHAR(100) NOT NULL,
+      email VARCHAR(150) NOT NULL UNIQUE,
+      password_hash VARCHAR(255) NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS categories (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(100) NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS products (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(150) NOT NULL,
+      description TEXT,
+      price DECIMAL(10,2) NOT NULL,
+      category_id INT NULL,
+      FOREIGN KEY (category_id) REFERENCES categories(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS cart_items (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL,
+      product_id INT NOT NULL,
+      quantity INT NOT NULL DEFAULT 1,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS orders (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS order_items (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      order_id INT NOT NULL,
+      product_id INT NOT NULL,
+      quantity INT NOT NULL,
+      FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+      FOREIGN KEY (product_id) REFERENCES products(id)
+    );
+  02-seed.sql: |-
+    INSERT INTO categories (name) VALUES
+      ('Books'), ('Stationery'), ('Tools'), ('Electronics'), ('Bags & Gear');
+
+    INSERT INTO products (name, description, price, category_id) VALUES
+      ('Data Structures Textbook', 'Core DSA concepts with examples', 499.00, 1),
+      ('Operating Systems Notes', 'Handwritten-style semester notes', 199.00, 1),
+      ('A4 Notebook Pack (5)', 'Ruled notebooks, 200 pages each', 250.00, 2),
+      ('Gel Pen Set (10)', 'Smooth blue and black gel pens', 120.00, 2),
+      ('Scientific Calculator', 'For exams and daily use', 899.00, 3),
+      ('Laptop Stand', 'Foldable aluminium stand', 649.00, 3),
+      ('Highlighter Set', 'Six pastel colours', 150.00, 2),
+      ('USB Flash Drive 32GB', 'Fast and compact storage', 450.00, 3),
+      ('Database Systems Guide', 'SQL, normalisation and transactions', 549.00, 1),
+      ('Computer Networks Handbook', 'From OSI model to routing', 479.00, 1),
+      ('Aptitude and Reasoning Workbook', 'Practice sets for placements', 299.00, 1),
+      ('Python Crash Course', 'Learn Python by building projects', 649.00, 1),
+      ('Sticky Notes Pack (12)', 'Assorted colours, 100 sheets each', 99.00, 2),
+      ('Geometry Box Set', 'Compass, divider, protractor and more', 180.00, 2),
+      ('Spiral Sketchbook A4', '120 pages, thick paper', 220.00, 2),
+      ('Permanent Marker Set (6)', 'Quick-dry, bold tip', 140.00, 2),
+      ('LED Desk Lamp', 'Adjustable brightness, USB powered', 799.00, 3),
+      ('Cable Organizer Kit', 'Clips and ties for a tidy desk', 249.00, 3),
+      ('Wireless Mouse', '2.4 GHz, silent clicks', 599.00, 4),
+      ('Bluetooth Earbuds', 'Up to 20 hours with the case', 1499.00, 4),
+      ('Power Bank 10000mAh', 'Dual USB output, compact size', 1299.00, 4),
+      ('Mechanical Keyboard', 'Blue switches, backlit keys', 2499.00, 4),
+      ('Laptop Backpack 30L', 'Water-resistant with padded straps', 1199.00, 5),
+      ('Steel Water Bottle 1L', 'Keeps drinks cold for 12 hours', 349.00, 5),
+      ('Padded Laptop Sleeve', 'Fits up to 15.6 inch laptops', 549.00, 5),
+      ('Whiteboard 2x3 ft', 'Wall mount, with marker tray', 999.00, 3);
+kind: ConfigMap
+metadata:
+  name: mysql-init
+  namespace: campuskart

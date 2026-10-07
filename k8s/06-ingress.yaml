@@ -1,0 +1,22 @@
+# localtest.me resolves to 127.0.0.1, so no /etc/hosts edit is needed.
+# one host: /api goes to backend, everything else to the frontend.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: campuskart
+  namespace: campuskart
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: campuskart.localtest.me
+      http:
+        paths:
+        - path: /api
+          pathType: Prefix
+          backend:
+            service: {name: backend, port: {number: 3000}}
+        - path: /
+          pathType: Prefix
+          backend:
+            service: {name: frontend, port: {number: 80}}
+            
