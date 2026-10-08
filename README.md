@@ -165,3 +165,7 @@ users → orders → order_items
 
 Thejas AM
 
+
+## Kubernetes work (this fork)
+
+This repository is a fork of the original CampusKart project, and the credit above stays as it is. The Kubernetes work in this fork was done by Rashid Khan: the Dockerfiles, the `k8s/` manifests, the `db/` schema and seed, the kind cluster setup, the GitHub Actions workflow and the audit write-up in `K8S-AUDIT.md`.
