@@ -1,3 +1,4 @@
+# Orders and users must survive a MySQL pod restart, so the data directory is on a PVC.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -18,7 +19,7 @@ metadata:
 spec:
   replicas: 1
   strategy:
-    type: Recreate   #RWO volume: the old pod must stop before the new one starts
+    type: Recreate        # RWO volume: the old pod must stop before the new one starts
   selector:
     matchLabels: {app: mysql}
   template:
@@ -60,6 +61,13 @@ spec:
                 - sh
                 - -c
                 - mysqladmin ping -h 127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD"
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - mysqladmin ping -h 127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD"
             periodSeconds: 10
           resources:
             requests: {cpu: 100m, memory: 256Mi}
@@ -73,7 +81,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: mysql # DB_HOST in the ConfigMap points to this name
+  name: mysql           # DB_HOST in the ConfigMap points to this name
   namespace: campuskart
 spec:
   selector: {app: mysql}

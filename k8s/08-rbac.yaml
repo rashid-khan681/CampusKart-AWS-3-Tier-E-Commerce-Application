@@ -1,0 +1,37 @@
+# backend-app: identity for the backend pods. The app never calls the Kubernetes API, so no token is mounted.
+# viewer: a read-only identity for a teammate or a CI job that only needs to look at pods and logs.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: backend-app
+  namespace: campuskart
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: viewer
+  namespace: campuskart
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-reader
+  namespace: campuskart
+rules:
+  - apiGroups: [""]
+    resources: [pods, pods/log]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: viewer-pod-reader
+  namespace: campuskart
+subjects:
+  - kind: ServiceAccount
+    name: viewer
+    namespace: campuskart
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: pod-reader

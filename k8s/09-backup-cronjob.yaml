@@ -1,0 +1,50 @@
+# Nightly mysqldump into its own PVC. Run it now with:
+#   kubectl -n campuskart create job --from=cronjob/mysql-backup mysql-backup-manual
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-backups
+  namespace: campuskart
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: mysql-backup
+  namespace: campuskart
+spec:
+  schedule: "0 2 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: mysqldump
+              image: mysql:8.0
+              command: [sh, -c, 'mysqldump --single-transaction --no-tablespaces -h mysql -u"$DB_USER" "$DB_NAME" > /backups/ecommerce-$(date +%Y%m%d-%H%M%S).sql && ls -l /backups']
+              env:
+                - name: DB_USER
+                  valueFrom:
+                    configMapKeyRef: {name: campuskart-config, key: DB_USER}
+                - name: DB_NAME
+                  valueFrom:
+                    configMapKeyRef: {name: campuskart-config, key: DB_NAME}
+                - name: MYSQL_PWD
+                  valueFrom:
+                    secretKeyRef: {name: campuskart-secrets, key: DB_PASSWORD}
+              volumeMounts:
+                - {name: backups, mountPath: /backups}
+              resources:
+                requests: {cpu: 50m, memory: 64Mi}
+                limits: {cpu: 250m, memory: 256Mi}
+          volumes:
+            - name: backups
+              persistentVolumeClaim: {claimName: mysql-backups}
