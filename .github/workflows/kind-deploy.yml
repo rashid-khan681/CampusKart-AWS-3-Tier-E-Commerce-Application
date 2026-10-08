@@ -1,0 +1,58 @@
+name: kind-deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  deploy-to-kind:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create 3-node kind cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: audit
+          config: kind/kind-config.yaml
+
+      - name: Build images
+        run: |
+          docker build -t campuskart-backend:1.0 ./backend
+          docker build -t campuskart-frontend:1.0 ./frontend
+
+      - name: Load images into kind
+        run: kind load docker-image campuskart-backend:1.0 campuskart-frontend:1.0 --name audit
+
+      - name: Apply manifests
+        run: kubectl apply -n campuskart -f k8s/
+
+      - name: Wait for rollouts
+        run: |
+          kubectl -n campuskart rollout status deploy/mysql --timeout=300s
+          kubectl -n campuskart rollout status deploy/backend --timeout=180s
+          kubectl -n campuskart rollout status deploy/frontend --timeout=180s
+
+      - name: Smoke test
+        run: |
+          kubectl -n campuskart port-forward svc/backend 3000:3000 &
+          kubectl -n campuskart port-forward svc/frontend 8080:80 &
+          sleep 5
+          curl -sf --retry 10 --retry-delay 3 --retry-connrefused http://localhost:3000/health
+          echo
+          curl -sf --retry 10 --retry-delay 3 --retry-connrefused -o /tmp/products.json http://localhost:3000/api/products
+          head -c 200 /tmp/products.json
+          echo
+          curl -sf --retry 10 --retry-delay 3 --retry-connrefused -o /dev/null -w "frontend HTTP %{http_code}\n" http://localhost:8080/
+
+      - name: Debug info on failure
+        if: failure()
+        run: |
+          kubectl -n campuskart get pods -o wide
+          kubectl -n campuskart describe pods
+          kubectl -n campuskart logs deploy/backend --tail=50
+          kubectl -n campuskart logs deploy/mysql --tail=50
