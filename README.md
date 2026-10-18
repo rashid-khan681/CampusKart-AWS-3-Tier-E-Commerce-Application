@@ -1,3 +1,5 @@
+> **Note about this fork:** This repository is a fork of [Thejasam04/CampusKart-AWS-3-Tier-E-Commerce-Application](https://github.com/Thejasam04/CampusKart-AWS-3-Tier-E-Commerce-Application). The text below is the original README of the AWS deployment, kept as it is for credit. In this fork I changed the app and added Docker and Kubernetes (kind) support. See [Changes in this fork](#changes-in-this-fork) at the bottom.
+
 #CampusKart – AWS 3-Tier E-Commerce Application
 
 CampusKart is a full-stack e-commerce application deployed on AWS using a production-style 3-tier architecture.  
@@ -166,6 +168,39 @@ users → orders → order_items
 Thejas AM
 
 
-## Kubernetes work (this fork)
+## Changes in this fork
 
-This repository is a fork of the original CampusKart project, and the credit above stays as it is. The Kubernetes work in this fork was done by Rashid Khan: the Dockerfiles, the `k8s/` manifests, the `db/` schema and seed, the kind cluster setup, the GitHub Actions workflow and the audit write-up in `K8S-AUDIT.md`.
+The original project above was built for AWS (S3, CloudFront, ALB, EC2 and RDS). In this fork I made the app run in containers and on Kubernetes. The original author's work and credit stay as they are.
+
+### Backend
+
+- `config/db.js` now reads the database settings from environment variables (`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`) instead of fixed values.
+- Fixed the register query in `modules/auth/authController.js`. It used the columns `name` and `password`, but the table has `full_name` and `password_hash`.
+- Added a `/health` route in `app.js` for the Kubernetes probes.
+- Added `Dockerfile` and `.dockerignore`.
+
+### Frontend
+
+- `src/services/api.js` and `src/pages/Products.js` no longer use a fixed load balancer URL. The API URL comes from `REACT_APP_API_URL`. If it is empty, the app calls `/api` on the same host.
+- New pages: Register and Orders. The Cart page now has a Place Order button.
+- New look: a new navbar (logo, search box and cart count), a new Home page, and a Products page with search, category filter and sorting. There is also a shared product card and a theme file (`theme.css`). Product pictures are emoji icons by category.
+- Added `Dockerfile`, `nginx.conf` and `.dockerignore`.
+
+### Database
+
+- Added `db/01-schema.sql` and `db/02-seed.sql`. I made the schema from the backend queries. The seed has 5 categories and 26 sample products.
+
+### Kubernetes and CI
+
+- `k8s/` has the manifests: namespace, ConfigMap, Secret, MySQL with a PVC, backend, frontend, Ingress, HPA, RBAC and a backup CronJob.
+- `kind/` has the 3-node kind cluster config, and `audit.sh` is the audit script.
+- `.github/workflows/kind-deploy.yml` creates a kind cluster, deploys the app and runs a smoke test on every push.
+- `K8S-AUDIT.md` has the audit with evidence, and the full steps to run the app on kind from a fresh machine.
+
+### What is different from the original README above
+
+- The database runs inside the cluster as `mysql:8.0` with a PVC. It does not use RDS.
+- The frontend is served by nginx. It does not use S3 and CloudFront.
+- Two items from "Future Enhancements" are now done in this fork: Docker containerization and CI with GitHub Actions.
+- I did not test the AWS deployment steps from the original README in this fork.
+- The passwords in `k8s/01-config.yaml` are demo values for local testing only.
